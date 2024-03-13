@@ -3,7 +3,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-FROM golang:1.21
+FROM golang:1.21 as build
 
 WORKDIR /src
 
@@ -16,20 +16,20 @@ COPY . ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
     cd cmd/gorse-worker && \
     CGO_ENABLED=0 go build -ldflags=" \
-       -X 'github.com/zhenghaoz/gorse/cmd/version.Version=$(git describe --tags $(git rev-parse HEAD))' \
-       -X 'github.com/zhenghaoz/gorse/cmd/version.GitCommit=$(git rev-parse HEAD)' \
-       -X 'github.com/zhenghaoz/gorse/cmd/version.BuildTime=$(date)'" .
+       -X 'github.com/Neura-Studios/gorse/cmd/version.Version=$(git describe --tags $(git rev-parse HEAD))' \
+       -X 'github.com/Neura-Studios/gorse/cmd/version.GitCommit=$(git rev-parse HEAD)' \
+       -X 'github.com/Neura-Studios/gorse/cmd/version.BuildTime=$(date)'" .
 
 RUN /src/cmd/gorse-worker/gorse-worker --version
 
 ############################
 # STEP 2 build a small image
 ############################
-FROM scratch
+FROM alpine
 
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-COPY --from=0 /src/cmd/gorse-worker/gorse-worker /usr/bin/gorse-worker
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /src/cmd/gorse-worker /usr/bin
+RUN /usr/bin/gorse-worker --version
 
 ENV USER root
 

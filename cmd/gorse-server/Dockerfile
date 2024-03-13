@@ -16,16 +16,18 @@ COPY . ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
     cd cmd/gorse-server && \
     CGO_ENABLED=0 go build -ldflags=" \
-       -X 'github.com/zhenghaoz/gorse/cmd/version.Version=$(git describe --tags $(git rev-parse HEAD))' \
-       -X 'github.com/zhenghaoz/gorse/cmd/version.GitCommit=$(git rev-parse HEAD)' \
-       -X 'github.com/zhenghaoz/gorse/cmd/version.BuildTime=$(date)'" .
+       -X 'github.com/Neura-Studios/gorse/cmd/version.Version=$(git describe --tags $(git rev-parse HEAD))' \
+       -X 'github.com/Neura-Studios/gorse/cmd/version.GitCommit=$(git rev-parse HEAD)' \
+       -X 'github.com/Neura-Studios/gorse/cmd/version.BuildTime=$(date)'" .
 
 RUN /src/cmd/gorse-server/gorse-server --version
 
 ############################
 # STEP 2 build a small image
 ############################
-FROM scratch
+FROM alpine:latest
+
+RUN apk --no-cache add curl
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
